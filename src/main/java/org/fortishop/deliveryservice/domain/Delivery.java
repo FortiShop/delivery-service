@@ -79,6 +79,11 @@ public class Delivery {
         this.completedAt = completedAt;
     }
 
+    public void cancel() {
+        this.status = DeliveryStatus.CANCELLED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void prepare() {
         this.status = DeliveryStatus.READY;
     }

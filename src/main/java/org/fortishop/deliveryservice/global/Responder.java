@@ -31,5 +31,4 @@ public class Responder {
         String body = String.format("{\"errorCode\":\"%s\", \"message\":\"%s\"}", errorCode, message);
         response.getWriter().write(body);
     }
-
 }
