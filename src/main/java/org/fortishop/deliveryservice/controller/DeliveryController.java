@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.fortishop.deliveryservice.domain.DeliveryStatus;
 import org.fortishop.deliveryservice.dto.request.AddressUpdateRequest;
 import org.fortishop.deliveryservice.dto.request.DeliveryRequest;
+import org.fortishop.deliveryservice.dto.request.StartDeliveryRequest;
 import org.fortishop.deliveryservice.dto.request.TrackingUpdateRequest;
 import org.fortishop.deliveryservice.dto.response.DeliveryResponse;
 import org.fortishop.deliveryservice.global.Responder;
@@ -66,8 +67,9 @@ public class DeliveryController {
 
     // 배송 시작 처리
     @PatchMapping("/{orderId}/start")
-    public ResponseEntity<Void> startDelivery(@PathVariable(name = "orderId") Long orderId) {
-        deliveryService.startDelivery(orderId);
+    public ResponseEntity<Void> startDelivery(@PathVariable(name = "orderId") Long orderId,
+                                              @Valid @RequestBody StartDeliveryRequest request) {
+        deliveryService.startDelivery(orderId, request);
         return Responder.success(HttpStatus.OK);
     }
 

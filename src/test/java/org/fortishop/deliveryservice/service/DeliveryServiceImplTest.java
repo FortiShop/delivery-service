@@ -12,6 +12,7 @@ import org.fortishop.deliveryservice.domain.Delivery;
 import org.fortishop.deliveryservice.domain.DeliveryStatus;
 import org.fortishop.deliveryservice.dto.request.AddressUpdateRequest;
 import org.fortishop.deliveryservice.dto.request.DeliveryRequest;
+import org.fortishop.deliveryservice.dto.request.StartDeliveryRequest;
 import org.fortishop.deliveryservice.dto.request.TrackingUpdateRequest;
 import org.fortishop.deliveryservice.dto.response.DeliveryResponse;
 import org.fortishop.deliveryservice.exception.delivery.DeliveryException;
@@ -94,7 +95,8 @@ class DeliveryServiceImplTest {
 
         when(deliveryRepository.findByOrderId(orderId)).thenReturn(Optional.of(delivery));
 
-        deliveryService.startDelivery(orderId);
+        StartDeliveryRequest request = new StartDeliveryRequest("대한통운", "123123123");
+        deliveryService.startDelivery(orderId, request);
 
         assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.SHIPPED);
         verify(kafkaProducer).sendDeliveryStarted(orderId);

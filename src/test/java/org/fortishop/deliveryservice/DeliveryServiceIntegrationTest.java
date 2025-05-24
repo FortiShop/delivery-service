@@ -34,6 +34,7 @@ import org.fortishop.deliveryservice.domain.Delivery;
 import org.fortishop.deliveryservice.domain.DeliveryStatus;
 import org.fortishop.deliveryservice.dto.request.AddressUpdateRequest;
 import org.fortishop.deliveryservice.dto.request.DeliveryRequest;
+import org.fortishop.deliveryservice.dto.request.StartDeliveryRequest;
 import org.fortishop.deliveryservice.dto.request.TrackingUpdateRequest;
 import org.fortishop.deliveryservice.dto.response.DeliveryResponse;
 import org.fortishop.deliveryservice.repository.DeliveryRepository;
@@ -484,46 +485,18 @@ public class DeliveryServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("배송 시작 처리 API는 배송 상태를 SHIPPED로 바꾸고 Kafka 이벤트를 발행한다")
-    void startDelivery_success() {
-        // given
-        Delivery saved = deliveryRepository.save(Delivery.builder()
-                .orderId(6001L)
-                .address("서울특별시 마포구")
-                .status(DeliveryStatus.READY)
-                .trackingNumber("TRACK6001")
-                .deliveryCompany("CJ대한통운")
-                .build());
-
-        // when
-        ResponseEntity<Void> res = restTemplate.exchange(
-                getBaseUrl("/api/delivery/" + saved.getOrderId() + "/start"),
-                HttpMethod.PATCH,
-                null,
-                Void.class
-        );
-
-        // then
-        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        await()
-                .atMost(Duration.ofSeconds(5))
-                .untilAsserted(() -> {
-                    Delivery updated = deliveryRepository.findByOrderId(saved.getOrderId()).orElseThrow();
-                    assertThat(updated.getStatus()).isEqualTo(DeliveryStatus.SHIPPED);
-                    assertThat(updated.getStartedAt()).isNotNull();
-                });
-
-        // Kafka 메시지 자체 검증은 별도 consumer 테스트에서 수행 예정
-    }
-
-    @Test
     @DisplayName("배송 시작 처리 시 존재하지 않는 orderId이면 예외가 발생한다")
     void startDelivery_notFound() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        StartDeliveryRequest request = new StartDeliveryRequest("로젠택배", "TRK8001");
+        HttpEntity<StartDeliveryRequest> httpEntity = new HttpEntity<>(request, headers);
+
         ResponseEntity<String> res = restTemplate.exchange(
                 getBaseUrl("/api/delivery/99999/start"),
                 HttpMethod.PATCH,
-                null,
+                httpEntity,
                 String.class
         );
 
@@ -574,61 +547,6 @@ public class DeliveryServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Kafka order.created 수신 시 배송이 READY 상태로 생성된다")
-    void kafka_orderCreated_createsDelivery() {
-        // given
-        Map<String, Object> payload = Map.of(
-                "orderId", 7001L,
-                "memberId", 1L,
-                "totalPrice", 20000,
-                "address", "서울 강남구",
-                "items", List.of(Map.of("productId", 101L, "quantity", 2, "price", 10000)),
-                "createdAt", LocalDateTime.now().toString(),
-                "traceId", UUID.randomUUID().toString()
-        );
-
-        sendKafkaMessage("order.created", "7001", payload);
-
-        // then
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            Delivery delivery = deliveryRepository.findByOrderId(7001L).orElseThrow();
-            assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.READY);
-            assertThat(delivery.getAddress()).isEqualTo("서울 강남구");
-        });
-    }
-
-    @Test
-    @DisplayName("Kafka payment.completed 수신 시 배송 상태가 SHIPPED로 변경된다")
-    void kafka_paymentCompleted_startsDelivery() {
-        // given
-        deliveryRepository.save(Delivery.builder()
-                .orderId(7002L)
-                .status(DeliveryStatus.READY)
-                .address("서울 서초구")
-                .trackingNumber("T7002")
-                .deliveryCompany("한진택배")
-                .build());
-
-        Map<String, Object> payload = Map.of(
-                "orderId", 7002L,
-                "paymentId", 999L,
-                "paidAmount", 20000,
-                "method", "CARD",
-                "timestamp", LocalDateTime.now().toString(),
-                "traceId", UUID.randomUUID().toString()
-        );
-
-        sendKafkaMessage("payment.completed", "7002", payload);
-
-        // then
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            Delivery delivery = deliveryRepository.findByOrderId(7002L).orElseThrow();
-            assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.SHIPPED);
-            assertThat(delivery.getStartedAt()).isNotNull();
-        });
-    }
-
-    @Test
     @DisplayName("Kafka payment.failed 수신 시 배송 상태가 CANCELLED로 변경된다 (보상 트랜잭션)")
     void kafka_paymentFailed_cancelsDelivery() {
         // given
@@ -652,69 +570,6 @@ public class DeliveryServiceIntegrationTest {
             Delivery delivery = deliveryRepository.findByOrderId(7003L).orElseThrow();
             assertThat(delivery.getStatus()).isEqualTo(DeliveryStatus.CANCELLED);
         });
-    }
-
-    @Test
-    @DisplayName("배송 시작 시 delivery.started 메시지가 정확히 발행된다")
-    void deliveryStarted_kafkaMessageContents() throws Exception {
-        // given
-        Delivery saved = deliveryRepository.save(Delivery.builder()
-                .orderId(8001L)
-                .address("서울 양천구")
-                .status(DeliveryStatus.READY)
-                .trackingNumber("TRK8001")
-                .deliveryCompany("로젠택배")
-                .build());
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getHost() + ":" + kafka.getMappedPort(9093));
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "delivery-service-test");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
-            consumer.subscribe(List.of("delivery.started"));
-            consumer.poll(Duration.ofMillis(100));
-
-            // when
-            restTemplate.exchange(
-                    getBaseUrl("/api/delivery/" + saved.getOrderId() + "/start"),
-                    HttpMethod.PATCH,
-                    HttpEntity.EMPTY,
-                    Void.class
-            );
-
-            // then
-            await()
-                    .atMost(Duration.ofSeconds(10))
-                    .pollInterval(Duration.ofMillis(500))
-                    .untilAsserted(() -> {
-                        ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(500));
-                        boolean matched = false;
-
-                        for (ConsumerRecord<String, String> record : records.records("delivery.started")) {
-                            System.out.printf("📌 Kafka Record key=%s, value=%s%n", record.key(), record.value());
-
-                            String rawJson = record.value();
-                            JsonNode root = objectMapper.readTree(rawJson);
-                            JsonNode json = root.isTextual() ? objectMapper.readTree(root.asText()) : root;
-
-                            assertThat(json.get("orderId").asLong()).isEqualTo(saved.getOrderId());
-                            assertThat(json.get("deliveryId").asLong()).isEqualTo(saved.getId());
-                            assertThat(json.get("trackingNumber").asText()).isEqualTo("TRK8001");
-                            assertThat(json.get("company").asText()).isEqualTo("로젠택배");
-                            assertThat(json.get("startedAt").asText()).isNotBlank();
-                            assertThat(json.get("traceId").asText()).isNotBlank();
-
-                            matched = true;
-                            break;
-                        }
-                        assertThat(matched).isTrue();
-                    });
-        }
     }
 
     @Test

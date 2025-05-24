@@ -9,6 +9,7 @@ import org.fortishop.deliveryservice.domain.Delivery;
 import org.fortishop.deliveryservice.domain.DeliveryStatus;
 import org.fortishop.deliveryservice.dto.request.AddressUpdateRequest;
 import org.fortishop.deliveryservice.dto.request.DeliveryRequest;
+import org.fortishop.deliveryservice.dto.request.StartDeliveryRequest;
 import org.fortishop.deliveryservice.dto.request.TrackingUpdateRequest;
 import org.fortishop.deliveryservice.dto.response.DeliveryResponse;
 import org.fortishop.deliveryservice.exception.delivery.DeliveryException;
@@ -72,10 +73,11 @@ public class DeliveryServiceImpl implements DeliveryService {
 
     @Override
     @Transactional
-    public void startDelivery(Long orderId) {
+    public void startDelivery(Long orderId, StartDeliveryRequest request) {
         Delivery delivery = deliveryRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new DeliveryException(DeliveryExceptionType.DELIVERY_NOT_FOUND));
         delivery.startDelivery(LocalDateTime.now());
+        delivery.updateTrackingInfo(request.getTrackingNumber(), request.getDeliveryCompany());
 
         kafkaProducer.sendDeliveryStarted(orderId);
     }

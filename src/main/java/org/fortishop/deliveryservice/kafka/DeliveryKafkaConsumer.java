@@ -3,7 +3,6 @@ package org.fortishop.deliveryservice.kafka;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fortishop.deliveryservice.dto.event.OrderCreatedEvent;
-import org.fortishop.deliveryservice.dto.event.PaymentCompletedEvent;
 import org.fortishop.deliveryservice.dto.event.PaymentFailedEvent;
 import org.fortishop.deliveryservice.dto.request.DeliveryRequest;
 import org.fortishop.deliveryservice.service.DeliveryService;
@@ -22,12 +21,6 @@ public class DeliveryKafkaConsumer {
         log.info("[Kafka] Received order.created: orderId={}", event.getOrderId());
         DeliveryRequest request = new DeliveryRequest(event.getOrderId(), event.getAddress());
         deliveryService.createDelivery(request);
-    }
-
-    @KafkaListener(topics = "payment.completed", groupId = "delivery-service", containerFactory = "paymentCompletedListenerContainerFactory")
-    public void consumePaymentCompleted(PaymentCompletedEvent event) {
-        log.info("[Kafka] Received payment.completed: orderId={}", event.getOrderId());
-        deliveryService.startDelivery(event.getOrderId());
     }
 
     @KafkaListener(topics = "payment.failed", groupId = "delivery-service", containerFactory = "paymentFailedListenerContainerFactory")
