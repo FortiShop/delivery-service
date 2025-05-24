@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.fortishop.deliveryservice.dto.event.OrderCreatedEvent;
-import org.fortishop.deliveryservice.dto.event.PaymentCompletedEvent;
 import org.fortishop.deliveryservice.dto.event.PaymentFailedEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,16 +38,6 @@ public class KafkaConsumerConfig {
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> orderCreatedListenerContainerFactory() {
         return createListenerContainerFactory(OrderCreatedEvent.class);
-    }
-
-    @Bean
-    public ConsumerFactory<String, PaymentCompletedEvent> paymentCompletedConsumerFactory() {
-        return createConsumerFactory(PaymentCompletedEvent.class);
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, PaymentCompletedEvent> paymentCompletedListenerContainerFactory() {
-        return createListenerContainerFactory(PaymentCompletedEvent.class);
     }
 
     @Bean
