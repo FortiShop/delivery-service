@@ -28,19 +28,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeliveryController {
     private final DeliveryService deliveryService;
 
-    // 배송 등록 (Kafka 수신 후 내부에서도 호출 가능)
     @PostMapping
     public ResponseEntity<DeliveryResponse> createDelivery(@Valid @RequestBody DeliveryRequest request) {
         return Responder.success(deliveryService.createDelivery(request));
     }
 
-    // 주문 ID로 배송 상태 조회
     @GetMapping("/{orderId}")
     public ResponseEntity<DeliveryResponse> getByOrderId(@PathVariable(name = "orderId") Long orderId) {
         return Responder.success(deliveryService.getByOrderId(orderId));
     }
 
-    // 배송 상태로 전체 목록 조회
     @GetMapping
     public ResponseEntity<List<DeliveryResponse>> getByStatus(@RequestParam(name = "status") DeliveryStatus status) {
         if (status == DeliveryStatus.CANCELLED) {
@@ -49,7 +46,6 @@ public class DeliveryController {
         return Responder.success(deliveryService.getByStatus(status));
     }
 
-    // 주소 변경
     @PatchMapping("/{orderId}/address")
     public ResponseEntity<Void> updateAddress(@PathVariable(name = "orderId") Long orderId,
                                               @Valid @RequestBody AddressUpdateRequest request) {
@@ -57,7 +53,6 @@ public class DeliveryController {
         return Responder.success(HttpStatus.OK);
     }
 
-    // 운송장 정보 수정
     @PatchMapping("/{orderId}/tracking")
     public ResponseEntity<Void> updateTracking(@PathVariable(name = "orderId") Long orderId,
                                                @Valid @RequestBody TrackingUpdateRequest request) {
@@ -65,7 +60,6 @@ public class DeliveryController {
         return Responder.success(HttpStatus.OK);
     }
 
-    // 배송 시작 처리
     @PatchMapping("/{orderId}/start")
     public ResponseEntity<Void> startDelivery(@PathVariable(name = "orderId") Long orderId,
                                               @Valid @RequestBody StartDeliveryRequest request) {
@@ -73,7 +67,6 @@ public class DeliveryController {
         return Responder.success(HttpStatus.OK);
     }
 
-    // 배송 완료 처리
     @PostMapping("/{orderId}/complete")
     public ResponseEntity<Void> completeDelivery(@PathVariable(name = "orderId") Long orderId) {
         deliveryService.completeDelivery(orderId);

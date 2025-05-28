@@ -200,7 +200,7 @@ public class DeliveryServiceIntegrationTest {
     @DisplayName("배송 생성 API 호출 시 배송이 READY 상태로 DB에 저장된다")
     void createDelivery_success() {
         // given
-        DeliveryRequest request = new DeliveryRequest(1001L, "서울특별시 강남구");
+        DeliveryRequest request = new DeliveryRequest(1001L, "서울특별시 강남구", "123123123123");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -227,7 +227,7 @@ public class DeliveryServiceIntegrationTest {
     @DisplayName("배송 생성 시 주소가 없으면 400 Bad Request가 발생한다")
     void createDelivery_missingAddress() {
         // given
-        DeliveryRequest request = new DeliveryRequest(1001L, null);
+        DeliveryRequest request = new DeliveryRequest(1001L, null, "123123123123");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -249,7 +249,7 @@ public class DeliveryServiceIntegrationTest {
     @DisplayName("배송 생성 시 orderId가 없으면 400 Bad Request가 발생한다")
     void createDelivery_missingOrderId() {
         // given
-        DeliveryRequest request = new DeliveryRequest(null, "서울특별시 강남구");
+        DeliveryRequest request = new DeliveryRequest(null, "서울특별시 강남구", "123123123123");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -275,6 +275,7 @@ public class DeliveryServiceIntegrationTest {
                 .orderId(2001L)
                 .address("서울 강서구")
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build());
 
         // when
@@ -347,6 +348,7 @@ public class DeliveryServiceIntegrationTest {
                 .orderId(4001L)
                 .address("서울 구로구")
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build());
 
         AddressUpdateRequest request = new AddressUpdateRequest("서울 중구");
@@ -419,6 +421,7 @@ public class DeliveryServiceIntegrationTest {
                 .orderId(4002L)
                 .address("서울 용산구")
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build());
 
         TrackingUpdateRequest request = new TrackingUpdateRequest("TRACK123", "CJ대한통운");
@@ -513,6 +516,7 @@ public class DeliveryServiceIntegrationTest {
                 .status(DeliveryStatus.SHIPPED)
                 .trackingNumber("TRACK6002")
                 .deliveryCompany("우체국택배")
+                .traceId("123123123123")
                 .build());
 
         // when
@@ -582,6 +586,7 @@ public class DeliveryServiceIntegrationTest {
                 .status(DeliveryStatus.SHIPPED)
                 .trackingNumber("TRK8002")
                 .deliveryCompany("CJ대한통운")
+                .traceId("123123123123")
                 .build());
 
         ObjectMapper objectMapper = new ObjectMapper();

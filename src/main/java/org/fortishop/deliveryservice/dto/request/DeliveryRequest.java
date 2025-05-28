@@ -14,4 +14,7 @@ public class DeliveryRequest {
 
     @NotNull
     private String address;
+
+    @NotNull
+    private String traceId;
 }

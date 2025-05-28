@@ -33,6 +33,7 @@ public class DeliveryServiceImpl implements DeliveryService {
                 .orderId(request.getOrderId())
                 .address(request.getAddress())
                 .status(DeliveryStatus.READY)
+                .traceId(request.getTraceId())
                 .build();
 
         return DeliveryResponse.of(deliveryRepository.save(delivery));
@@ -100,10 +101,10 @@ public class DeliveryServiceImpl implements DeliveryService {
 
         if (delivery.getStatus() == DeliveryStatus.READY) {
             delivery.cancel();
-            log.info("[Compensation] Cancelled delivery for orderId={}", orderId);
+            log.info("[Compensation] Cancelled delivery for orderId={}, traceId={}", orderId, delivery.getTraceId());
         } else {
-            log.warn("[Compensation] Cannot cancel delivery. Current status={}, orderId={}",
-                    delivery.getStatus(), orderId);
+            log.warn("[Compensation] Cannot cancel delivery. Current status={}, orderId={}, traceId={}",
+                    delivery.getTraceId(), delivery.getStatus(), orderId);
         }
     }
 }

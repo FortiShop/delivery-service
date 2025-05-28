@@ -49,6 +49,8 @@ public class Delivery {
 
     private LocalDateTime updatedAt;
 
+    private String traceId;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

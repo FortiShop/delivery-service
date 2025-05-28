@@ -43,11 +43,12 @@ class DeliveryServiceImplTest {
     @DisplayName("배송 준비 등록 성공")
     void createDelivery_success() {
         // given
-        DeliveryRequest request = new DeliveryRequest(orderId, "서울시 강남구");
+        DeliveryRequest request = new DeliveryRequest(orderId, "서울시 강남구", "123123123123");
         Delivery delivery = Delivery.builder()
                 .orderId(orderId)
                 .address("서울시 강남구")
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build();
 
         when(deliveryRepository.save(any())).thenReturn(delivery);
@@ -76,6 +77,7 @@ class DeliveryServiceImplTest {
         Delivery delivery = Delivery.builder()
                 .orderId(orderId)
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build();
 
         when(deliveryRepository.findByOrderId(orderId)).thenReturn(Optional.of(delivery));
@@ -91,6 +93,7 @@ class DeliveryServiceImplTest {
         Delivery delivery = Delivery.builder()
                 .orderId(orderId)
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build();
 
         when(deliveryRepository.findByOrderId(orderId)).thenReturn(Optional.of(delivery));
@@ -108,6 +111,7 @@ class DeliveryServiceImplTest {
         Delivery delivery = Delivery.builder()
                 .orderId(orderId)
                 .status(DeliveryStatus.SHIPPED)
+                .traceId("123123123123")
                 .build();
 
         when(deliveryRepository.findByOrderId(orderId)).thenReturn(Optional.of(delivery));
@@ -125,6 +129,7 @@ class DeliveryServiceImplTest {
                 .orderId(orderId)
                 .status(DeliveryStatus.READY)
                 .address("서울시 강남구")
+                .traceId("123123123123")
                 .build();
 
         when(deliveryRepository.findByOrderId(orderId)).thenReturn(Optional.of(delivery));
@@ -141,6 +146,7 @@ class DeliveryServiceImplTest {
         Delivery delivery = Delivery.builder()
                 .orderId(orderId)
                 .status(DeliveryStatus.READY)
+                .traceId("123123123123")
                 .build();
 
         when(deliveryRepository.findByOrderId(orderId)).thenReturn(Optional.of(delivery));

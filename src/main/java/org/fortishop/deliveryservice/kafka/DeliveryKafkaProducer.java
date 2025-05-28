@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fortishop.deliveryservice.domain.Delivery;
@@ -37,7 +36,7 @@ public class DeliveryKafkaProducer {
                 .trackingNumber(delivery.getTrackingNumber())
                 .company(delivery.getDeliveryCompany())
                 .startedAt(LocalDateTime.now())
-                .traceId(UUID.randomUUID().toString())
+                .traceId(delivery.getTraceId())
                 .build();
 
         try {
@@ -57,7 +56,7 @@ public class DeliveryKafkaProducer {
                 .orderId(delivery.getOrderId())
                 .deliveryId(delivery.getId())
                 .completedAt(LocalDateTime.now())
-                .traceId(UUID.randomUUID().toString())
+                .traceId(delivery.getTraceId())
                 .build();
 
         try {

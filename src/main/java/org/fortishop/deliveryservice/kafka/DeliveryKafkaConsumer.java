@@ -18,14 +18,14 @@ public class DeliveryKafkaConsumer {
 
     @KafkaListener(topics = "order.created", groupId = "delivery-service", containerFactory = "orderCreatedListenerContainerFactory")
     public void consumeOrderCreated(OrderCreatedEvent event) {
-        log.info("[Kafka] Received order.created: orderId={}", event.getOrderId());
-        DeliveryRequest request = new DeliveryRequest(event.getOrderId(), event.getAddress());
+        log.info("[Kafka] Received order.created: orderId={}, traceId={}", event.getOrderId(), event.getTraceId());
+        DeliveryRequest request = new DeliveryRequest(event.getOrderId(), event.getAddress(), event.getTraceId());
         deliveryService.createDelivery(request);
     }
 
     @KafkaListener(topics = "payment.failed", groupId = "delivery-service", containerFactory = "paymentFailedListenerContainerFactory")
     public void consumePaymentFailed(PaymentFailedEvent event) {
-        log.info("[Kafka] Received payment.failed: orderId={}", event.getOrderId());
+        log.info("[Kafka] Received payment.failed: orderId={}, traceId={}", event.getOrderId(), event.getTraceId());
         deliveryService.compensateDeliveryOnPaymentFailure(event.getOrderId());
     }
 }
