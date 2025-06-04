@@ -17,7 +17,7 @@ public class DeliveryKafkaConsumer {
 
     private final DeliveryService deliveryService;
 
-    @KafkaListener(topics = "order.created", groupId = "delivery-service", containerFactory = "orderCreatedListenerContainerFactory")
+    @KafkaListener(topics = "order.created", groupId = "delivery-group", containerFactory = "orderCreatedListenerContainerFactory")
     public void consumeOrderCreated(OrderCreatedEvent event, Acknowledgment ack) {
         try {
             log.info("[Kafka] Received order.created: orderId={}, traceId={}", event.getOrderId(), event.getTraceId());
@@ -30,7 +30,7 @@ public class DeliveryKafkaConsumer {
         }
     }
 
-    @KafkaListener(topics = "payment.failed", groupId = "delivery-service", containerFactory = "paymentFailedListenerContainerFactory")
+    @KafkaListener(topics = "payment.failed", groupId = "delivery-group", containerFactory = "paymentFailedListenerContainerFactory")
     public void consumePaymentFailed(PaymentFailedEvent event, Acknowledgment ack) {
         try {
             log.info("[Kafka] Received payment.failed: orderId={}, traceId={}", event.getOrderId(), event.getTraceId());
@@ -40,5 +40,17 @@ public class DeliveryKafkaConsumer {
             log.error("처리 실패: payment.failed", e);
             throw e;
         }
+    }
+
+    @KafkaListener(topics = "order.created.dlq", groupId = "delivery-dlq-group")
+    public void handleDlq(OrderCreatedEvent event) {
+        log.error("[DLQ 메시지 확인] order.created 처리 실패 : {}", event);
+        // slack 또는 이메일로 개발자, 관리자에게 알림
+    }
+
+    @KafkaListener(topics = "payment.failed.dlq", groupId = "delivery-dlq-group")
+    public void handleDlq(PaymentFailedEvent event) {
+        log.error("[DLQ 메시지 확인] payment.failed 처리 실패 : {}", event);
+        // slack 또는 이메일로 개발자, 관리자에게 알림
     }
 }
